@@ -3,10 +3,12 @@
 
 import type { Chain, Hex } from 'viem';
 
-import { Alert, Card, CardBody, CardHeader, Divider } from '@heroui/react';
+import { Alert, Button, Card, CardBody, CardHeader, Divider } from '@heroui/react';
+import { useToggle } from 'react-use';
 
 import AddressRow from '@mimir-wallet/components/AddressRow';
 import Bytes from '@mimir-wallet/components/Bytes';
+import DecodeCallData from '@mimir-wallet/components/DecodeCallData';
 import FormatBalance from '@mimir-wallet/components/FormatBalance';
 import FunctionArgs from '@mimir-wallet/components/FunctionArgs';
 import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
@@ -24,8 +26,29 @@ function Item({ label, content }: { label: React.ReactNode; content: React.React
   );
 }
 
+function Fallback({ data }: { data: Hex }) {
+  const [isOpen, toggleOpen] = useToggle(false);
+
+  return (
+    <div className='bg-secondary rounded-small p-2.5 space-y-1'>
+      <Item
+        label='Call Data'
+        content={
+          <div className='flex items-center gap-2 text-foreground/50'>
+            View Details
+            <Button color='primary' variant='bordered' radius='full' size='sm' onClick={toggleOpen}>
+              Decode
+            </Button>
+            <DecodeCallData data={data} isOpen={isOpen} onClose={toggleOpen} />
+          </div>
+        }
+      />
+    </div>
+  );
+}
+
 function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransaction; chain: Chain }) {
-  const [dataSize, parsed] = useParseCall(safeTx.data);
+  const [dataSize, parsed, isParsed] = useParseCall(safeTx.data);
   const upSm = useMediaQuery('sm');
 
   const details = (
@@ -86,7 +109,13 @@ function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransa
             </div>
           ) : null}
 
-          {dataSize > 0 ? <FunctionArgs chain={chain} data={safeTx.data} /> : null}
+          {dataSize > 0 ? (
+            isParsed ? (
+              <FunctionArgs chain={chain} data={safeTx.data} />
+            ) : (
+              <Fallback data={safeTx.data} />
+            )
+          ) : null}
         </div>
 
         {details}
