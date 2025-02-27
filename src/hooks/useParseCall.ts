@@ -12,9 +12,9 @@ import { decodeMultisend } from '@mimir-wallet/safe';
 
 const cache = new Map<Hex, [size: number, parsed: ParsedCall<CallFunctions>]>();
 
-async function getAbi(hex: Hex, fromCache: boolean = true): Promise<string | null> {
+async function getAbi(hex: Hex): Promise<string | null> {
   return fetch(
-    `https://www.4byte.directory/api/v1/signatures/?format=json&hex_signature=${hex.slice(0, 10)}${fromCache ? '' : '&timestamp=' + Date.now()}`
+    `https://www.4byte.directory/api/v1/signatures/?format=json&hex_signature=${hex.slice(0, 10)}&timestamp=${Date.now()}`
   )
     .then((res) => res.json())
     .then((results) => {
@@ -40,10 +40,10 @@ export function useParseCall(data: Hex): [size: number, parsed: ParsedCall<CallF
   );
   const [isParsed, setIsParsed] = useState(cache.has(data));
 
-  const parseFromAbi = useCallback((data: Hex, fromCache: boolean = true) => {
+  const parseFromAbi = useCallback((data: Hex) => {
     const dataSize = size(data);
 
-    getAbi(data, fromCache)
+    getAbi(data)
       .then((signatures) => {
         const abiItem = parseAbiItem(`function ${signatures}` as string);
 
@@ -78,7 +78,7 @@ export function useParseCall(data: Hex): [size: number, parsed: ParsedCall<CallF
   useEffect(() => {
     const handleRefetch = (value: Hex) => {
       if (value === data) {
-        parseFromAbi(data, false);
+        parseFromAbi(data);
       }
     };
 

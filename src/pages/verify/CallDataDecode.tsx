@@ -4,6 +4,7 @@
 import type { Chain, Hex } from 'viem';
 
 import { Alert, Button, Card, CardBody, CardHeader, Divider } from '@heroui/react';
+import { createContext, useContext, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import AddressRow from '@mimir-wallet/components/AddressRow';
@@ -14,6 +15,11 @@ import FunctionArgs from '@mimir-wallet/components/FunctionArgs';
 import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
 import { useParseCall } from '@mimir-wallet/hooks/useParseCall';
 import { Operation, type SafeTransaction } from '@mimir-wallet/safe/types';
+
+const context = createContext<{ decodeSuccess: boolean; setDecodeSuccess: (decodeSuccess: boolean) => void }>({
+  decodeSuccess: false,
+  setDecodeSuccess: () => {}
+});
 
 function Item({ label, content }: { label: React.ReactNode; content: React.ReactNode }) {
   return (
@@ -28,6 +34,15 @@ function Item({ label, content }: { label: React.ReactNode; content: React.React
 
 function Fallback({ data }: { data: Hex }) {
   const [isOpen, toggleOpen] = useToggle(false);
+  const { setDecodeSuccess } = useContext(context);
+
+  const handleSuccess = () => {
+    setDecodeSuccess(true);
+
+    setTimeout(() => {
+      setDecodeSuccess(false);
+    }, 1000);
+  };
 
   return (
     <div className='bg-secondary rounded-small p-2.5 space-y-1'>
@@ -39,7 +54,7 @@ function Fallback({ data }: { data: Hex }) {
             <Button color='primary' variant='bordered' radius='full' size='sm' onClick={toggleOpen}>
               Decode
             </Button>
-            <DecodeCallData data={data} isOpen={isOpen} onClose={toggleOpen} />
+            <DecodeCallData data={data} isOpen={isOpen} onClose={toggleOpen} onSuccess={handleSuccess} />
           </div>
         }
       />
@@ -50,6 +65,7 @@ function Fallback({ data }: { data: Hex }) {
 function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransaction; chain: Chain }) {
   const [dataSize, parsed, isParsed] = useParseCall(safeTx.data);
   const upSm = useMediaQuery('sm');
+  const [decodeSuccess, setDecodeSuccess] = useState(false);
 
   const details = (
     <div className='bg-secondary rounded-small p-2.5 space-y-1'>
@@ -86,39 +102,44 @@ function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransa
       </CardHeader>
       <Divider />
       <CardBody className='p-0 space-y-3 sm:space-y-5'>
-        <div className='space-y-4'>
-          {dataSize > 0 ? (
-            <div className='flex flex-wrap items-center gap-2 text-medium'>
-              <b className='text-primary'>{safeTx.operation === Operation.Call ? 'Call' : 'DelegateCall'}</b>
-              <span>{parsed.functionName}</span>
-              <b>On</b>
-              <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
-            </div>
-          ) : safeTx.operation === Operation.DelegateCall ? (
-            <Alert variant='bordered' color='warning'>
-              <b>Warning:</b> This is a delegate call.
-            </Alert>
-          ) : null}
+        <context.Provider value={{ decodeSuccess, setDecodeSuccess }}>
+          <div
+            data-success={decodeSuccess}
+            className='p-0 rounded-medium bg-transparent space-y-4 data-[success=true]:bg-success/50 data-[success=true]:p-3 transition-all duration-300'
+          >
+            {dataSize > 0 ? (
+              <div className='flex flex-wrap items-center gap-2 text-medium'>
+                <b className='text-primary'>{safeTx.operation === Operation.Call ? 'Call' : 'DelegateCall'}</b>
+                <span>{parsed.functionName}</span>
+                <b>On</b>
+                <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
+              </div>
+            ) : safeTx.operation === Operation.DelegateCall ? (
+              <Alert variant='bordered' color='warning'>
+                <b>Warning:</b> This is a delegate call.
+              </Alert>
+            ) : null}
 
-          {safeTx.value > 0n ? (
-            <div className='flex flex-wrap items-center gap-2 text-medium'>
-              <b className='text-primary'>Send</b>
-              <FormatBalance value={safeTx.value} showSymbol {...chain.nativeCurrency} />
-              <b>To</b>
-              <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
-            </div>
-          ) : null}
+            {safeTx.value > 0n ? (
+              <div className='flex flex-wrap items-center gap-2 text-medium'>
+                <b className='text-primary'>Send</b>
+                <FormatBalance value={safeTx.value} showSymbol {...chain.nativeCurrency} />
+                <b>To</b>
+                <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
+              </div>
+            ) : null}
 
-          {dataSize > 0 ? (
-            isParsed ? (
-              <FunctionArgs chain={chain} data={safeTx.data} />
-            ) : (
-              <Fallback data={safeTx.data} />
-            )
-          ) : null}
-        </div>
+            {dataSize > 0 ? (
+              isParsed ? (
+                <FunctionArgs chain={chain} data={safeTx.data} />
+              ) : (
+                <Fallback data={safeTx.data} />
+              )
+            ) : null}
+          </div>
 
-        {details}
+          {details}
+        </context.Provider>
       </CardBody>
     </Card>
   );
