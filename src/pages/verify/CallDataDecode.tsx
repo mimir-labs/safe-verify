@@ -9,13 +9,14 @@ import AddressRow from '@mimir-wallet/components/AddressRow';
 import Bytes from '@mimir-wallet/components/Bytes';
 import FormatBalance from '@mimir-wallet/components/FormatBalance';
 import FunctionArgs from '@mimir-wallet/components/FunctionArgs';
+import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
 import { useParseCall } from '@mimir-wallet/hooks/useParseCall';
 import { Operation, type SafeTransaction } from '@mimir-wallet/safe/types';
 
 function Item({ label, content }: { label: React.ReactNode; content: React.ReactNode }) {
   return (
-    <div className='grid grid-cols-10 text-tiny'>
-      <div className='col-span-3 font-bold self-center tex-foreground'>{label}</div>
+    <div className='grid grid-cols-11 sm:grid-cols-10 text-tiny'>
+      <div className='col-span-4 sm:col-span-3 font-bold self-center tex-foreground'>{label}</div>
       <div className='col-span-7 self-center text-foreground/50 max-w-full overflow-hidden text-ellipsis'>
         {content}
       </div>
@@ -25,13 +26,14 @@ function Item({ label, content }: { label: React.ReactNode; content: React.React
 
 function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransaction; chain: Chain }) {
   const [dataSize, parsed] = useParseCall(safeTx.data);
+  const upSm = useMediaQuery('sm');
 
   const details = (
     <div className='bg-secondary rounded-small p-2.5 space-y-1'>
       <Item label='Hash' content={hash} />
       <Item
         label='To'
-        content={<AddressRow showFull withCopy withExplorer iconSize={18} chain={chain} address={safeTx.to} />}
+        content={<AddressRow showFull={upSm} withCopy withExplorer iconSize={18} chain={chain} address={safeTx.to} />}
       />
       <Item label='Value' content={<FormatBalance value={safeTx.value} showSymbol {...chain.nativeCurrency} />} />
       <Item label='Operation' content={Operation[safeTx.operation]} />
@@ -40,7 +42,14 @@ function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransa
       <Item
         label='refundReceiver'
         content={
-          <AddressRow showFull withCopy withExplorer iconSize={18} chain={chain} address={safeTx.refundReceiver} />
+          <AddressRow
+            showFull={upSm}
+            withCopy
+            withExplorer
+            iconSize={18}
+            chain={chain}
+            address={safeTx.refundReceiver}
+          />
         }
       />
       <Item label='Raw Data' content={<Bytes data={safeTx.data} />} />
@@ -48,19 +57,19 @@ function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransa
   );
 
   return (
-    <Card className='p-5 border-1 border-secondary space-y-5'>
+    <Card className='p-3 sm:p-5 border-1 border-secondary space-y-3 sm:space-y-5'>
       <CardHeader className='p-0'>
         <h4 className='text-center text-xl font-bold'>Call Data Decode</h4>
       </CardHeader>
       <Divider />
-      <CardBody className='p-0 space-y-5'>
+      <CardBody className='p-0 space-y-3 sm:space-y-5'>
         <div className='space-y-4'>
           {dataSize > 0 ? (
-            <div className='flex items-center gap-2 text-medium'>
+            <div className='flex flex-wrap items-center gap-2 text-medium'>
               <b className='text-primary'>{safeTx.operation === Operation.Call ? 'Call' : 'DelegateCall'}</b>
               <span>{parsed.functionName}</span>
               <b>On</b>
-              <AddressRow withCopy showFull withExplorer address={safeTx.to} iconSize={20} chain={chain} />
+              <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
             </div>
           ) : safeTx.operation === Operation.DelegateCall ? (
             <Alert variant='bordered' color='warning'>
@@ -69,11 +78,11 @@ function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransa
           ) : null}
 
           {safeTx.value > 0n ? (
-            <div className='flex items-center gap-2 text-medium'>
+            <div className='flex flex-wrap items-center gap-2 text-medium'>
               <b className='text-primary'>Send</b>
               <FormatBalance value={safeTx.value} showSymbol {...chain.nativeCurrency} />
               <b>To</b>
-              <AddressRow withCopy showFull withExplorer address={safeTx.to} iconSize={20} chain={chain} />
+              <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
             </div>
           ) : null}
 

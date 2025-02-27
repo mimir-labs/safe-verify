@@ -7,6 +7,7 @@ import { useState } from 'react';
 import IconFailed from '@mimir-wallet/assets/svg/icon-failed-fill.svg?react';
 import IconSuccess from '@mimir-wallet/assets/svg/icon-success-fill.svg?react';
 import AddressRow from '@mimir-wallet/components/AddressRow';
+import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
 import { useQueryParam } from '@mimir-wallet/hooks/useQueryParams';
 
 import CallDataDecode from './CallDataDecode';
@@ -27,6 +28,7 @@ function Verify() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerifyResult>();
   const [error, setError] = useState<string>();
+  const upSm = useMediaQuery('sm');
 
   const handleClick = async () => {
     setLoading(true);
@@ -44,14 +46,14 @@ function Verify() {
   };
 
   return (
-    <Card className='w-[1000px] max-w-full mx-auto my-5 p-5 border-1 border-secondary space-y-5'>
+    <Card className='w-[1000px] max-w-[calc(100vw-32px)] sm:max-w-full mx-4 sm:mx-auto my-4 sm:my-5 sm:p-5 p-3 border-1 border-secondary space-y-3 sm:space-y-5'>
       <CardHeader className='flex justify-center p-0'>
         <h4 className='text-center text-xl font-bold'>
           Verify your Safe{'{'}Wallet{'}'} transaction
         </h4>
       </CardHeader>
       <Divider />
-      <CardBody className='p-0 space-y-5'>
+      <CardBody className='p-0 space-y-3 sm:space-y-5'>
         <Input
           variant='bordered'
           labelPlacement='outside'
@@ -68,12 +70,12 @@ function Verify() {
           <Alert color='danger'>{error}</Alert>
         ) : result ? (
           <>
-            <div className='p-3 rounded-small bg-secondary space-y-3'>
+            <div className='p-3 rounded-small bg-secondary space-y-3 text-small sm:text-medium'>
               <Item
                 label='Safe Address'
                 value={
                   <AddressRow
-                    showFull
+                    showFull={upSm}
                     withCopy
                     withExplorer
                     iconSize={18}
@@ -89,17 +91,20 @@ function Verify() {
                 <Item
                   key={signature.signer}
                   label={
-                    <div className='flex items-center'>
-                      Signature Check {index + 1}(Signer:{' '}
-                      <AddressRow
-                        showFull
-                        withCopy
-                        withExplorer
-                        iconSize={18}
-                        chain={result.chain}
-                        address={signature.signer}
-                      />
-                      )
+                    <div className='flex flex-wrap items-center'>
+                      Signature Check {index + 1}
+                      <span className='inline-flex items-center gap-x-1'>
+                        (Signer:
+                        <AddressRow
+                          showFull={upSm}
+                          withCopy
+                          withExplorer
+                          iconSize={18}
+                          chain={result.chain}
+                          address={signature.signer}
+                        />
+                        )
+                      </span>
                     </div>
                   }
                   value={signature.verified ? <IconSuccess /> : <IconFailed />}

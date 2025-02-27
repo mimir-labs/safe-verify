@@ -7,7 +7,7 @@ import Logo from '@mimir-wallet/assets/images/logo.png';
 
 function TopBar() {
   return (
-    <Navbar maxWidth='full'>
+    <Navbar maxWidth='full' isBordered shouldHideOnScroll>
       <NavbarBrand>
         <Image radius='none' width={87} src={Logo} alt='Mimir Wallet' />
       </NavbarBrand>
