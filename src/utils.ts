@@ -1,7 +1,7 @@
 // Copyright 2023-2024 dev.mimir authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Chain, createPublicClient, http, type PublicClient, type Transport } from 'viem';
+import { type Chain, createPublicClient, http, type PublicClient, type Transport } from 'viem';
 import * as chains from 'viem/chains';
 
 export function getSafeGateway(chainId: number) {
@@ -36,6 +36,21 @@ export function getPublicClient(chainId: number) {
   cacheClient.set(chainId, client);
 
   return client;
+}
+
+export function getExplorerChain(explorerUrl: string) {
+  const url = new URL(explorerUrl);
+  const hostname = url.hostname;
+
+  const chain = Object.values(chains).find(
+    (chain) => chain.blockExplorers && new URL(chain.blockExplorers.default.url).hostname === hostname
+  );
+
+  if (!chain) {
+    throw new Error('Invalid explorer URL');
+  }
+
+  return chain;
 }
 
 type ExplorerType = 'address' | 'tx' | 'block' | 'token' | 'nft';

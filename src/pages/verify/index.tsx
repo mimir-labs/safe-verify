@@ -57,8 +57,8 @@ function Verify() {
         <Input
           variant='bordered'
           labelPlacement='outside'
-          label='Safe Transction Link'
-          placeholder='Paste {Safe} transaction link here'
+          label='Share Link'
+          placeholder='Paste {Safe} share link here, or paste explorer transaction link here'
           value={safeTransactionLink}
           onChange={(e) => setSafeTransactionLink(e.target.value)}
         />
