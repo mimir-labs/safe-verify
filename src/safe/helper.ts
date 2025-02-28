@@ -9,18 +9,19 @@ import { bytesToBigInt, bytesToNumber, getAddress, hashTypedData, hexToBytes, to
 import { SafeAbi } from './abi';
 import { TypedDataTypes } from './config';
 
-export async function getSafeVersion(client: PublicClient, address: string) {
+export async function getSafeVersion(client: PublicClient, address: string, blockNumber?: bigint) {
   return await client.readContract({
     address: getAddress(address),
     abi: SafeAbi,
     functionName: 'VERSION',
-    args: []
+    args: [],
+    blockNumber
   });
 }
 
 export function hashSafeTransaction(chainId: number, safeAddress: Address, tx: SafeTransaction, version: string): Hex {
   return hashTypedData({
-    domain: ['1.1.0', '1.2.0'].includes(version)
+    domain: ['1.1.0', '1.1.1', '1.2.0'].includes(version)
       ? {
           verifyingContract: safeAddress
         }
