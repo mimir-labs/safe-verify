@@ -1,17 +1,19 @@
 // Copyright 2023-2024 dev.mimir authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Input, Link } from '@heroui/react';
-import { useState } from 'react';
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Form, Input, Link } from '@heroui/react';
+import { useCallback, useRef, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import IconFailed from '@mimir-wallet/assets/svg/icon-failed-fill.svg?react';
 import IconSuccess from '@mimir-wallet/assets/svg/icon-success-fill.svg?react';
 import AddressRow from '@mimir-wallet/components/AddressRow';
 import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
 import { useQueryParam } from '@mimir-wallet/hooks/useQueryParams';
+import { Operation } from '@mimir-wallet/safe/types';
 
 import CallDataDecode from './CallDataDecode';
-import { type VerifyResult, verifySafeTransaction } from './utils';
+import { isValidUrl, type VerifyResult, verifySafeTransaction } from './utils';
 
 function Item({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
@@ -29,12 +31,13 @@ function Verify() {
   const [result, setResult] = useState<VerifyResult>();
   const [error, setError] = useState<string>();
   const upSm = useMediaQuery('sm');
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleClick = async () => {
+  const handleClick = useCallback(async (link: string) => {
     setLoading(true);
 
     try {
-      const result = await verifySafeTransaction(safeTransactionLink);
+      const result = await verifySafeTransaction(link);
 
       setResult(result);
       setError(undefined);
@@ -43,7 +46,13 @@ function Verify() {
     }
 
     setLoading(false);
-  };
+  }, []);
+
+  useEffectOnce(() => {
+    if (url && isValidUrl(url)) {
+      handleClick(url);
+    }
+  });
 
   return (
     <Card className='w-[1000px] max-w-[calc(100vw-32px)] sm:max-w-full mx-4 sm:mx-auto my-4 sm:my-5 sm:p-5 p-3 border-1 border-secondary space-y-3 sm:space-y-5'>
@@ -54,18 +63,32 @@ function Verify() {
       </CardHeader>
       <Divider />
       <CardBody className='p-0 space-y-3 sm:space-y-5'>
-        <Input
-          variant='bordered'
-          labelPlacement='outside'
-          label='Share Link'
-          placeholder='Paste {Safe} share link here, or paste explorer transaction link here'
-          value={safeTransactionLink}
-          onChange={(e) => setSafeTransactionLink(e.target.value)}
-        />
-        <Divider />
-        <Button color='primary' fullWidth disabled={!safeTransactionLink} onPress={handleClick} isLoading={loading}>
-          Verify
-        </Button>
+        <Form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleClick(safeTransactionLink);
+          }}
+          ref={formRef}
+        >
+          <Input
+            variant='bordered'
+            labelPlacement='outside'
+            label='Share Link'
+            placeholder='Paste {Safe} share link here, or paste explorer transaction link here'
+            value={safeTransactionLink}
+            onChange={(e) => {
+              setSafeTransactionLink(e.target.value);
+
+              if (isValidUrl(e.target.value)) {
+                handleClick(e.target.value);
+              }
+            }}
+          />
+          <Divider />
+          <Button color='primary' fullWidth disabled={!safeTransactionLink} type='submit' isLoading={loading}>
+            Verify
+          </Button>
+        </Form>
         {error ? (
           <Alert color='danger'>{error}</Alert>
         ) : result ? (
@@ -111,6 +134,13 @@ function Verify() {
                 />
               ))}
             </div>
+
+            {result.safeTx.operation === Operation.DelegateCall && (
+              <Alert variant='flat' color='danger' title={<h4 className='text-large font-bold uppercase'>Warning</h4>}>
+                This operation/transaction may alter the internal state of the multisig contract, Please review the
+                details carefully.
+              </Alert>
+            )}
 
             <CallDataDecode hash={result.hash.value} safeTx={result.safeTx} chain={result.chain} />
           </>

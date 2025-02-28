@@ -9,6 +9,7 @@ import {
   decodeFunctionData,
   getAddress,
   type Hex,
+  isAddress,
   isAddressEqual,
   isHex,
   parseAbi,
@@ -221,6 +222,33 @@ async function parseFromExplorer(
     console.error(error);
 
     return null;
+  }
+}
+
+export function isValidUrl(value: string) {
+  try {
+    const link = new URL(value);
+    const transactionId = link.searchParams.get('id');
+    const safe = link.searchParams.get('safe');
+
+    if (safe && transactionId) {
+      return isAddress(safe.split(':')[1]) && transactionId.length === 118;
+    }
+
+    const url = new URL(value);
+    const hash = url.pathname
+      .split('/')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .pop();
+
+    if (hash && isHex(hash) && hash.length === 66) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
   }
 }
 

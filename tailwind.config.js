@@ -46,17 +46,17 @@ module.exports = {
             foreground: { DEFAULT: '#151F34' },
             divider: { DEFAULT: '#F5F3FF', 300: '#D9D9D9' },
             primary: {
-              50: '#F5F3FF',
-              100: '#EEE8FF',
-              200: '#CEBFFF',
-              300: '#AB96FF',
-              400: '#866EFF',
-              500: '#5F45FF',
-              600: '#4130D9',
-              700: '#281EB3',
-              800: '#15118C',
-              900: '#0B0B66',
               foreground: '#FFF',
+              50: '#f4f0ff',
+              100: '#eee8ff',
+              200: '#cebfff',
+              300: '#cebfff',
+              400: '#866eff',
+              500: '#5f45ff',
+              600: '#4130d9',
+              700: '#281eb3',
+              800: '#15118c',
+              900: '#0b0b66',
               DEFAULT: '#5F45FF'
             },
             secondary: {
@@ -65,15 +65,45 @@ module.exports = {
             },
             success: {
               foreground: '#FFF',
+              50: '#e6fff4',
+              100: '#a3ffdc',
+              200: '#7affd1',
+              300: '#4ef5c0',
+              400: '#25e8b1',
+              500: '#00dba6',
+              600: '#00b58e',
+              700: '#008f75',
+              800: '#006959',
+              900: '#00423b',
               DEFAULT: '#00DBA6'
             },
             warning: {
               foreground: '#FFF',
+              50: '#fff7e6',
+              100: '#ffe3ab',
+              200: '#ffd182',
+              300: '#ffbd59',
+              400: '#ffa530',
+              500: '#ff8d07',
+              600: '#d96c00',
+              700: '#b35300',
+              800: '#8c3d00',
+              900: '#662900',
               DEFAULT: '#FF8D07'
             },
             danger: {
               foreground: '#FFF',
-              DEFAULT: '#E82F5E'
+              50: '#fff1e6',
+              100: '#ffd2b3',
+              200: '#ffb78a',
+              300: '#ff9861',
+              400: '#ff7738',
+              500: '#ff5310',
+              600: '#d93802',
+              700: '#b32700',
+              800: '#8c1a00',
+              900: '#660f00',
+              DEFAULT: '#FF5310'
             }
           }
         }

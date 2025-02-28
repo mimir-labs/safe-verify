@@ -3,7 +3,7 @@
 
 import type { Chain, Hex } from 'viem';
 
-import { Alert, Button, Card, CardBody, CardHeader, Divider } from '@heroui/react';
+import { Button, Card, CardBody, CardHeader, Divider } from '@heroui/react';
 import { createContext, useContext, useState } from 'react';
 import { useToggle } from 'react-use';
 
@@ -109,15 +109,15 @@ function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransa
           >
             {dataSize > 0 ? (
               <div className='flex flex-wrap items-center gap-2 text-medium'>
-                <b className='text-primary'>{safeTx.operation === Operation.Call ? 'Call' : 'DelegateCall'}</b>
+                {safeTx.operation === Operation.DelegateCall ? (
+                  <b className='text-danger'>⚠️ DelegateCall</b>
+                ) : (
+                  <b className='text-primary'>Call</b>
+                )}
                 <span>{parsed.functionName}</span>
                 <b>On</b>
                 <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
               </div>
-            ) : safeTx.operation === Operation.DelegateCall ? (
-              <Alert variant='bordered' color='warning'>
-                <b>Warning:</b> This is a delegate call.
-              </Alert>
             ) : null}
 
             {safeTx.value > 0n ? (
