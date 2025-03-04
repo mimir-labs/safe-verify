@@ -22,6 +22,10 @@ function FunctionItem({ chain, name, type, data }: { chain: Chain; name: string;
       return <Bytes data={data} />;
     }
 
+    if (Array.isArray(data)) {
+      return JSON.stringify(data);
+    }
+
     return data?.toString?.() || null;
   }, [chain, data, type, upSm]);
 
