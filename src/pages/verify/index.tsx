@@ -142,7 +142,12 @@ function Verify() {
               </Alert>
             )}
 
-            <CallDataDecode hash={result.hash.value} safeTx={result.safeTx} chain={result.chain} />
+            <CallDataDecode
+              hash={result.hash.value}
+              safeAddress={result.safeAddress}
+              safeTx={result.safeTx}
+              chain={result.chain}
+            />
           </>
         ) : null}
       </CardBody>

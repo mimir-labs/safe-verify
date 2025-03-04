@@ -1,25 +1,16 @@
 // Copyright 2023-2024 dev.mimir authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Chain, Hex } from 'viem';
+import type { Address, Chain, Hex } from 'viem';
 
-import { Button, Card, CardBody, CardHeader, Divider } from '@heroui/react';
-import { createContext, useContext, useState } from 'react';
-import { useToggle } from 'react-use';
+import { Card, CardBody, CardHeader, Divider } from '@heroui/react';
 
 import AddressRow from '@mimir-wallet/components/AddressRow';
 import Bytes from '@mimir-wallet/components/Bytes';
-import DecodeCallData from '@mimir-wallet/components/DecodeCallData';
+import Calldisplay from '@mimir-wallet/components/Calldisplay';
 import FormatBalance from '@mimir-wallet/components/FormatBalance';
-import FunctionArgs from '@mimir-wallet/components/FunctionArgs';
 import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
-import { useParseCall } from '@mimir-wallet/hooks/useParseCall';
 import { Operation, type SafeTransaction } from '@mimir-wallet/safe/types';
-
-const context = createContext<{ decodeSuccess: boolean; setDecodeSuccess: (decodeSuccess: boolean) => void }>({
-  decodeSuccess: false,
-  setDecodeSuccess: () => {}
-});
 
 function Item({ label, content }: { label: React.ReactNode; content: React.ReactNode }) {
   return (
@@ -32,40 +23,18 @@ function Item({ label, content }: { label: React.ReactNode; content: React.React
   );
 }
 
-function Fallback({ data }: { data: Hex }) {
-  const [isOpen, toggleOpen] = useToggle(false);
-  const { setDecodeSuccess } = useContext(context);
-
-  const handleSuccess = () => {
-    setDecodeSuccess(true);
-
-    setTimeout(() => {
-      setDecodeSuccess(false);
-    }, 1000);
-  };
-
-  return (
-    <div className='bg-secondary rounded-small p-2.5 space-y-1'>
-      <Item
-        label='Call Data'
-        content={
-          <div className='flex items-center gap-2 text-foreground/50'>
-            View Details
-            <Button color='primary' variant='bordered' radius='full' size='sm' onClick={toggleOpen}>
-              Decode
-            </Button>
-            <DecodeCallData data={data} isOpen={isOpen} onClose={toggleOpen} onSuccess={handleSuccess} />
-          </div>
-        }
-      />
-    </div>
-  );
-}
-
-function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransaction; chain: Chain }) {
-  const [dataSize, parsed, isParsed] = useParseCall(safeTx.data);
+function CallDataDecode({
+  hash,
+  safeAddress,
+  safeTx,
+  chain
+}: {
+  hash: Hex;
+  safeAddress: Address;
+  safeTx: SafeTransaction;
+  chain: Chain;
+}) {
   const upSm = useMediaQuery('sm');
-  const [decodeSuccess, setDecodeSuccess] = useState(false);
 
   const details = (
     <div className='bg-secondary rounded-small p-2.5 space-y-1'>
@@ -102,44 +71,16 @@ function CallDataDecode({ hash, safeTx, chain }: { hash: Hex; safeTx: SafeTransa
       </CardHeader>
       <Divider />
       <CardBody className='p-0 space-y-3 sm:space-y-5'>
-        <context.Provider value={{ decodeSuccess, setDecodeSuccess }}>
-          <div
-            data-success={decodeSuccess}
-            className='p-0 rounded-medium bg-transparent space-y-4 data-[success=true]:bg-success/50 data-[success=true]:p-3 transition-all duration-300'
-          >
-            {dataSize > 0 ? (
-              <div className='flex flex-wrap items-center gap-2 text-medium'>
-                {safeTx.operation === Operation.DelegateCall ? (
-                  <b className='text-danger'>⚠️ DelegateCall</b>
-                ) : (
-                  <b className='text-primary'>Call</b>
-                )}
-                <span>{parsed.functionName}</span>
-                <b>On</b>
-                <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
-              </div>
-            ) : null}
+        <Calldisplay
+          chain={chain}
+          data={safeTx.data}
+          from={safeAddress}
+          operation={safeTx.operation}
+          to={safeTx.to}
+          value={safeTx.value}
+        />
 
-            {safeTx.value > 0n ? (
-              <div className='flex flex-wrap items-center gap-2 text-medium'>
-                <b className='text-primary'>Send</b>
-                <FormatBalance value={safeTx.value} showSymbol {...chain.nativeCurrency} />
-                <b>To</b>
-                <AddressRow withCopy showFull={upSm} withExplorer address={safeTx.to} iconSize={20} chain={chain} />
-              </div>
-            ) : null}
-
-            {dataSize > 0 ? (
-              isParsed ? (
-                <FunctionArgs chain={chain} data={safeTx.data} />
-              ) : (
-                <Fallback data={safeTx.data} />
-              )
-            ) : null}
-          </div>
-
-          {details}
-        </context.Provider>
+        {details}
       </CardBody>
     </Card>
   );
