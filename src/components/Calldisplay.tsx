@@ -20,10 +20,10 @@ import Multisend from './Multisend';
 
 export interface CallDisplayProps {
   chain: Chain;
-  from: Address;
+  from?: Address;
   data: Hex;
-  to: Address;
-  operation: Operation;
+  to?: Address;
+  operation?: Operation;
   value?: bigint;
 }
 
@@ -102,14 +102,20 @@ function CallDisplay({ chain, data, from, to, operation, value = 0n }: CallDispl
       >
         {dataSize > 0 ? (
           <div className='flex flex-wrap items-center gap-2 text-medium'>
-            {operation === Operation.DelegateCall ? (
-              <b className='text-danger'>⚠️ DelegateCall</b>
-            ) : (
-              <b className='text-primary'>Call</b>
-            )}
+            {operation ? (
+              operation === Operation.DelegateCall ? (
+                <b className='text-danger'>⚠️ DelegateCall</b>
+              ) : (
+                <b className='text-primary'>Call</b>
+              )
+            ) : null}
             <span>{parsed.functionName}</span>
-            <b>On</b>
-            <AddressRow withCopy showFull={upSm} withExplorer address={to} iconSize={20} chain={chain} />
+            {to ? (
+              <>
+                <b>On</b>
+                <AddressRow withCopy showFull={upSm} withExplorer address={to} iconSize={20} chain={chain} />
+              </>
+            ) : null}
           </div>
         ) : null}
 

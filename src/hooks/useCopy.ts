@@ -4,18 +4,26 @@
 import { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-export function useCopy(value?: { toString: () => string }, ms: number = 500): [isCopied: boolean, copy: () => void] {
+export function useCopy(
+  value?: { toString: () => string },
+  ms: number = 500
+): [isCopied: boolean, copy: (value?: string) => void] {
   const [copied, setCopied] = useState(false);
   const [, copy] = useCopyToClipboard();
 
   return [
     copied,
-    useCallback(() => {
-      if (value) {
-        copy(value.toString());
-        setCopied(true);
-        setTimeout(() => setCopied(false), ms);
-      }
-    }, [copy, ms, value])
+    useCallback(
+      (v?: string) => {
+        const _value = v || value;
+
+        if (_value) {
+          copy(_value.toString());
+          setCopied(true);
+          setTimeout(() => setCopied(false), ms);
+        }
+      },
+      [copy, ms, value]
+    )
   ];
 }

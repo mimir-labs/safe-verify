@@ -1,18 +1,35 @@
 // Copyright 2023-2024 dev.mimir authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Form, Input, Link } from '@heroui/react';
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Divider,
+  Form,
+  Input,
+  Link,
+  Tooltip
+} from '@heroui/react';
 import { useCallback, useRef, useState } from 'react';
 import { useEffectOnce } from 'react-use';
+import { type Hex, isHex } from 'viem';
 
 import IconFailed from '@mimir-wallet/assets/svg/icon-failed-fill.svg?react';
-import IconSuccess from '@mimir-wallet/assets/svg/icon-success-fill.svg?react';
+import IconShare from '@mimir-wallet/assets/svg/icon-share.svg?react';
+import IconSuccess from '@mimir-wallet/assets/svg/icon-success.svg?react';
+import IconSuccessFill from '@mimir-wallet/assets/svg/icon-success-fill.svg?react';
 import AddressRow from '@mimir-wallet/components/AddressRow';
+import { useCopy } from '@mimir-wallet/hooks/useCopy';
 import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
 import { useQueryParam } from '@mimir-wallet/hooks/useQueryParams';
 import { Operation } from '@mimir-wallet/safe/types';
 
 import CallDataDecode from './CallDataDecode';
+import CallDataOnly from './CallDataOnly';
 import { isValidUrl, type VerifyResult, verifySafeTransaction } from './utils';
 
 function Item({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
@@ -29,17 +46,20 @@ function Verify() {
   const [safeTransactionLink, setSafeTransactionLink] = useState(() => (url ? decodeURIComponent(url) : ''));
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerifyResult>();
+  const [callResult, setCallResult] = useState<Hex>();
   const [error, setError] = useState<string>();
   const upSm = useMediaQuery('sm');
   const formRef = useRef<HTMLFormElement>(null);
+  const [isCopied, copy] = useCopy();
 
-  const handleClick = useCallback(async (link: string) => {
+  const handleParseUrl = useCallback(async (link: string) => {
     setLoading(true);
 
     try {
       const result = await verifySafeTransaction(link);
 
       setResult(result);
+      setCallResult(undefined);
       setError(undefined);
     } catch (error: any) {
       setError(error.message);
@@ -48,9 +68,18 @@ function Verify() {
     setLoading(false);
   }, []);
 
+  const handleParseCall = useCallback((calldata: Hex) => {
+    setCallResult(calldata);
+    setResult(undefined);
+  }, []);
+
   useEffectOnce(() => {
-    if (url && isValidUrl(url)) {
-      handleClick(url);
+    if (url) {
+      if (isValidUrl(url)) {
+        handleParseUrl(url);
+      } else if (isHex(url)) {
+        handleParseCall(url);
+      }
     }
   });
 
@@ -62,11 +91,16 @@ function Verify() {
         </h4>
       </CardHeader>
       <Divider />
-      <CardBody className='p-0 space-y-3 sm:space-y-5'>
+      <CardBody className='p-0 space-y-3 sm:space-y-5 overflow-x-hidden'>
         <Form
           onSubmit={(e) => {
             e.preventDefault();
-            handleClick(safeTransactionLink);
+
+            if (isValidUrl(safeTransactionLink)) {
+              handleParseUrl(safeTransactionLink);
+            } else if (isHex(safeTransactionLink)) {
+              handleParseCall(safeTransactionLink);
+            }
           }}
           ref={formRef}
         >
@@ -74,13 +108,15 @@ function Verify() {
             variant='bordered'
             labelPlacement='outside'
             label='Share Link'
-            placeholder='Paste {Safe} share link here, or paste explorer transaction link here'
+            placeholder='Paste {Safe} tx share link, or blockchain explorer tx link, or raw (call)data here.'
             value={safeTransactionLink}
             onChange={(e) => {
               setSafeTransactionLink(e.target.value);
 
               if (isValidUrl(e.target.value)) {
-                handleClick(e.target.value);
+                handleParseUrl(e.target.value);
+              } else if (isHex(e.target.value)) {
+                handleParseCall(e.target.value);
               }
             }}
           />
@@ -93,6 +129,28 @@ function Verify() {
           <Alert color='danger'>{error}</Alert>
         ) : result ? (
           <>
+            <div className='flex items-center justify-between'>
+              <b>Result</b>
+              <Tooltip content={isCopied ? 'Copied' : 'Copy share link'} closeDelay={0}>
+                <Button
+                  isIconOnly
+                  color='primary'
+                  size='sm'
+                  variant='light'
+                  onPress={() => {
+                    const url = new URL(window.location.href);
+
+                    url.pathname = '/';
+                    url.searchParams.set('url', safeTransactionLink);
+
+                    copy(url.toString());
+                  }}
+                >
+                  {isCopied ? <IconSuccess /> : <IconShare />}
+                </Button>
+              </Tooltip>
+            </div>
+
             <div className='p-3 rounded-small bg-secondary space-y-3 text-small sm:text-medium'>
               <Item
                 label='Safe Address'
@@ -108,7 +166,7 @@ function Verify() {
                 }
               />
               <Item label='Version' value={result.version} />
-              <Item label='SafeHash Check' value={result.hash.verified ? <IconSuccess /> : <IconFailed />} />
+              <Item label='SafeHash Check' value={result.hash.verified ? <IconSuccessFill /> : <IconFailed />} />
 
               {result.signatures.map((signature, index) => (
                 <Item
@@ -130,7 +188,7 @@ function Verify() {
                       </span>
                     </div>
                   }
-                  value={signature.verified ? <IconSuccess /> : <IconFailed />}
+                  value={signature.verified ? <IconSuccessFill /> : <IconFailed />}
                 />
               ))}
             </div>
@@ -149,6 +207,8 @@ function Verify() {
               chain={result.chain}
             />
           </>
+        ) : callResult ? (
+          <CallDataOnly calldata={callResult} />
         ) : null}
       </CardBody>
       <Divider />

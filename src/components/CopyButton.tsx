@@ -20,7 +20,7 @@ function CopyButton({ value, className, style, ...props }: Props) {
       {...props}
       isIconOnly
       variant='light'
-      onPress={copy}
+      onPress={() => copy()}
       style={style}
       className={(className || '').concat(' border-transparent min-w-0 w-[16px] h-[16px]')}
     >
