@@ -33,7 +33,7 @@ function Item({
   index: number;
   data: Hex;
   to: Address;
-  from: Address;
+  from?: Address;
   value: bigint;
   operation: Operation;
   isOpen: boolean;
@@ -111,7 +111,7 @@ function Multisend({
 }: {
   chain: Chain;
   parsed: ParsedCall<CallFunctions>;
-  from: Address;
+  from?: Address;
   data: Hex;
 }) {
   const txs = useParseMultisend(parsed);

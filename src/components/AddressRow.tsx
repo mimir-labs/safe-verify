@@ -7,6 +7,7 @@ import { Button, Link } from '@heroui/react';
 import React from 'react';
 
 import IconAnchor from '@mimir-wallet/assets/svg/icon-anchor.svg?react';
+import { useTokenMeta } from '@mimir-wallet/hooks/useToken';
 import { explorerUrl } from '@mimir-wallet/utils';
 
 import Address from './Address';
@@ -24,10 +25,14 @@ interface Props {
 }
 
 function AddressRow({ className, chain, iconSize, address, showFull, withCopy, withExplorer }: Props) {
+  const tokenMeta = useTokenMeta(address);
+
+  const displayName = tokenMeta?.n || tokenMeta?.s || <Address address={address} showFull={showFull} />;
+
   return (
     <div className={`inline-flex items-center gap-x-[5px] ${className || ''}`}>
-      <AddressIcon size={iconSize} address={address} />
-      <Address address={address} showFull={showFull} />
+      <AddressIcon size={iconSize} address={address} src={tokenMeta?.i} />
+      {displayName}
 
       {withCopy && <CopyAddressButton style={{ color: 'inherit' }} size='sm' address={address} />}
       {withExplorer && address && (
