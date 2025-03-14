@@ -86,7 +86,7 @@ function CallDisplay({ chain, data, from, to, operation, value = 0n }: CallDispl
     nodes.push(
       isParsed ? (
         <div className='space-y-3' key='function args'>
-          <FunctionArgs chain={chain} data={data} />
+          <FunctionArgs address={to} chain={chain} data={data} />
         </div>
       ) : (
         <Fallback data={data} />
