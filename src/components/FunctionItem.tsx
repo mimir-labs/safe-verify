@@ -10,8 +10,21 @@ import { useMediaQuery } from '@mimir-wallet/hooks/useMediaQuery';
 
 import AddressRow from './AddressRow';
 import Bytes from './Bytes';
+import FormatBalance from './FormatBalance';
 
-function FunctionItem({ chain, name, type, data }: { chain: Chain; name: string; type: string; data: unknown }) {
+function FunctionItem({
+  chain,
+  name,
+  type,
+  data,
+  token
+}: {
+  chain: Chain;
+  name: string;
+  type: string;
+  data: unknown;
+  token?: [number, string, string];
+}) {
   const upSm = useMediaQuery('sm');
   const content = useMemo(() => {
     if (type === 'address') {
@@ -26,8 +39,12 @@ function FunctionItem({ chain, name, type, data }: { chain: Chain; name: string;
       return JSON.stringify(data);
     }
 
+    if (token && type === 'uint256') {
+      return <FormatBalance showSymbol symbol={token[1]} value={data?.toString?.() || 0n} decimals={token[0]} />;
+    }
+
     return data?.toString?.() || null;
-  }, [chain, data, type, upSm]);
+  }, [chain, data, token, type, upSm]);
 
   return (
     <div className='flex flex-col gap-1'>
