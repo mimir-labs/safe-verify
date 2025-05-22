@@ -7,14 +7,18 @@ import type { SafeTransaction } from './types';
 import {
   type Address,
   encodePacked,
+  getAddress,
   type Hex,
+  isAddressEqual,
   keccak256,
   type PublicClient,
   recoverAddress,
   sliceHex,
-  type Transport
+  type Transport,
+  zeroAddress
 } from 'viem';
 
+import { SafeAbi } from './abi';
 import { hashSafeTransaction } from './helper';
 
 export async function recoverSigner(
@@ -22,7 +26,8 @@ export async function recoverSigner(
   message: SafeTransaction,
   safeAddress: Address,
   version: string,
-  signature: Hex
+  signature: Hex,
+  executor?: Address | null
 ) {
   if (!['1.1.0', '1.1.1', '1.2.0', '1.3.0', '1.4.0', '1.4.1'].includes(version)) {
     throw new Error('Unsupported Safe version');
@@ -34,7 +39,21 @@ export async function recoverSigner(
   if (v == 0) {
     throw new Error('Unsupported contract signature');
   } else if (v == 1) {
-    throw new Error('Unsupported approveHash signature');
+    const address = getAddress(sliceHex(signature, 12, 32));
+    const approved = await client.readContract({
+      address: safeAddress,
+      abi: SafeAbi,
+      functionName: 'approvedHashes',
+      args: [address, '0x9965a1a75ffe861bb63c706f4d01eac611431ab6814a2141dcb83b04c89ec5cd']
+    });
+
+    if (approved == 1n) {
+      return address;
+    } else if (approved === 0n && executor && isAddressEqual(executor, address)) {
+      return address;
+    }
+
+    return zeroAddress;
   } else if (v > 30) {
     return recoverAddress({
       hash: keccak256(encodePacked(['string', 'bytes32'], ['\x19Ethereum Signed Message:\n32', hash])),
