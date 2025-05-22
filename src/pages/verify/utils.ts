@@ -64,7 +64,8 @@ async function parseFromSafeLink(
       signatures: { signer: Address; signature: Hex }[],
       chainId: number,
       safeAddress: Address,
-      version: string
+      version: string,
+      executor: Address | null
     ]
   | null
 > {
@@ -101,6 +102,8 @@ async function parseFromSafeLink(
       return res.json();
     });
 
+    console.log(data);
+
     const safeAddress = getAddress(data.safeAddress);
     const safeTransaction: SafeTransaction = {
       to: data.txData.to.value || zeroAddress,
@@ -126,7 +129,8 @@ async function parseFromSafeLink(
       })),
       chain.chainId,
       safeAddress,
-      await getSafeVersion(client, safeAddress)
+      await getSafeVersion(client, safeAddress),
+      data.detailedExecutionInfo?.executor?.value ? getAddress(data.detailedExecutionInfo.executor.value) : null
     ];
   } catch (error) {
     console.error(error);
@@ -144,7 +148,8 @@ async function parseFromExplorer(
       signatures: { signer?: Address; signature: Hex }[],
       chainId: number,
       safeAddress: Address,
-      version: string
+      version: string,
+      executor: Address | null
     ]
   | null
 > {
@@ -213,7 +218,8 @@ async function parseFromExplorer(
         signatures,
         client.chain.id,
         getAddress(transaction.to),
-        version
+        version,
+        getAddress(transaction.from)
       ];
     } else {
       throw new Error('Invalid Safe transaction');
@@ -259,7 +265,7 @@ export async function verifySafeTransaction(link: string) {
     throw new Error('Can not parse Safe transaction');
   }
 
-  const [_safeTxHash, safeTransaction, signatures, chainId, safeAddress, version] = result;
+  const [_safeTxHash, safeTransaction, signatures, chainId, safeAddress, version, executor] = result;
 
   const client = getPublicClient(chainId);
 
@@ -278,7 +284,7 @@ export async function verifySafeTransaction(link: string) {
   };
 
   for (const item of signatures) {
-    const signer = await recoverSigner(client, safeTransaction, safeAddress, version, item.signature);
+    const signer = await recoverSigner(client, safeTransaction, safeAddress, version, item.signature, executor);
 
     status.signatures.push({
       signer,

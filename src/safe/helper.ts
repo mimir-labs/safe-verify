@@ -10,6 +10,8 @@ import { SafeAbi } from './abi';
 import { TypedDataTypes } from './config';
 
 export async function getSafeVersion(client: PublicClient, address: string, blockNumber?: bigint) {
+  console.log('getSafeVersion', address);
+
   return await client.readContract({
     address: getAddress(address),
     abi: SafeAbi,

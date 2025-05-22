@@ -8,5 +8,6 @@ export const SafeAbi = parseAbi([
   'function getThreshold() view returns (uint256)',
   'function getOwners() view returns (address[])',
   'function getModules() view returns (address[])',
-  'function getGuard() view returns (address)'
+  'function getGuard() view returns (address)',
+  'function approvedHashes(address,bytes32) view returns (uint256)'
 ]);
